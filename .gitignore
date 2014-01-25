@@ -33,3 +33,5 @@ nosetests.xml
 
 \#*#
 *~
+
+test_project.sqlite3
