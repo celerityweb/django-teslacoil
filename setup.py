@@ -4,7 +4,7 @@ import teslacoil
 setup(
     name='django-teslacoil',
     version=teslacoil.__version__,
-    packages=find_packages(),
+    packages=find_packages(exclude=['test_project']),
     url='https://github.com/celerityweb/django-teslacoil/',
     license='LGPL v3 - see LICENSE file',
     author='See AUTHORS file',
