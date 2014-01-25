@@ -8,12 +8,21 @@ logger = logging.getLogger(__name__)
 import six
 import django
 from django.contrib.admin import site
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.messages.api import get_messages
 from django.utils.text import capfirst
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser
 
 from . import __version__ as teslacoil_version
+
+class LoginViewPermissions(IsAdminUser):
+    def has_permission(self, request, view):
+        if request.method == 'POST': # POST is what they use to login
+            return True
+        return super(LoginViewPermissions, self).has_permission(request, view)
 
 class TeslaSite(object):
     """TeslaSite wraps a django AdminSite object to determine what model
@@ -80,6 +89,9 @@ class TeslaSite(object):
                 name='site_config'),
             url('^_messages/', api_view(['GET'])(self.user_messages_view),
                 name='site_messages'),
+            url('^_session/',
+                api_view(['GET', 'POST', 'DELETE'])(self.session_view),
+                name='site_session'),
         )
 
         return urlpatterns
@@ -88,6 +100,7 @@ class TeslaSite(object):
     def urls(self):
         return self.get_urls(), self.app_name, self.name
 
+    @permission_classes([IsAdminUser])
     def site_config_view(self, request):
         return Response(self.site_config(request))
 
@@ -112,13 +125,37 @@ class TeslaSite(object):
             model_dict['config'] = self.registry_config[app_label][model_name]
         return to_return
 
-    def site_actions_view(self, request):
-        return Response(self.site_actions(request))
-
+    @permission_classes([IsAdminUser])
     def user_messages_view(self, request):
         return Response(
             {'messages': [
                 {'level': message.level,
                  'message': message.message,
-                 'extra_tags': message.extra_tags} \
+                 'extra_tags': message.extra_tags}
                 for message in get_messages(request)]})
+
+    def _current_user_data(self, request):
+        return {
+            'pk': request.user.pk,
+            'username': request.user.username,
+            'email': request.user.email,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'is_superuser': request.user.is_superuser}
+
+    @permission_classes([LoginViewPermissions])
+    def session_view(self, request):
+        if request.method == 'GET':
+            return Response(self._current_user_data(request)
+            )
+        elif request.method == 'POST':
+            form_obj = AuthenticationForm(request, request.DATA)
+            # TODO: Make sure view that sends static HTML sets test cookie
+            if form_obj.is_valid():
+                login(request, form_obj.user_cache)
+                return Response(self._current_user_data(request), status=201)
+            return Response(form_obj.errors, status=403)
+        elif request.method == 'DELETE':
+            logout(request)
+            return Response({}, status=205)
+
