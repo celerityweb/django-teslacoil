@@ -121,6 +121,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
+    'rest_framework',
     'teslacoil',
 )
 
@@ -157,3 +158,5 @@ LOGGING = {
         'propagate': True,
     },
 }
+
+DEFAULT_CHARSET = 'utf8'
