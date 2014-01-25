@@ -96,7 +96,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
+    'teslacoil.middleware.TeslaMessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -150,13 +150,20 @@ LOGGING = {
         'teslacoil': {
             'handlers': ['console'],
             'level': 'DEBUG'
+        },
+        'test_project': {
+            'handlers': ['console'],
+            'level': 'DEBUG'
         }
     },
     'root': {
         'handlers': ['console'],
         'level': 'INFO',
-        'propagate': True,
     },
 }
 
 DEFAULT_CHARSET = 'utf8'
+
+TEST_USER_USERNAME = 'jpschome'
+TEST_USER_PASSWORD = 'sesame'
+TEST_USER_EMAIL = 'joeschmoe@example.com'
