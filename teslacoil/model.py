@@ -19,7 +19,7 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
         # generate a dynamic serializer for the model
         ModelAdminSerializer = serializers.ModelSerializer
         ModelAdminSerializer.Meta = type('Meta', (object,), {
-            'model': self.model_admin.model,
+            'model': self.model,
         })
 
         # return serialized data

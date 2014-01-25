@@ -102,13 +102,15 @@ class TeslaSite(object):
         for model, model_admin in six.iteritems(self.admin_site._registry):
             # instantiate a dynamic ViewSet for `model_admin`
             ModelAdminViewSet = type('ModelAdminViewSet', (TeslaModelAdminViewSet,), {
+                'model': model,
                 'model_admin': model_admin,
             })
 
             # create routes for the dynamic ViewSet
             router.register(r'^{app_name}/{model_name}'.format(
-                app_name=model._meta.app_label,
-                model_name=model._meta.module_name), ModelAdminViewSet, base_name='')
+                    app_name=model._meta.app_label,
+                    model_name=model._meta.module_name),
+                ModelAdminViewSet)
 
         urlpatterns += router.urls
 
