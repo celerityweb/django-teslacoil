@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 import six
 import django
 from django.contrib.admin import site
+from django.contrib.messages.api import get_messages
 from django.utils.text import capfirst
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -77,6 +78,8 @@ class TeslaSite(object):
             '',
             url('^_config/', api_view(['GET'])(self.site_config_view),
                 name='site_config'),
+            url('^_messages/', api_view(['GET'])(self.user_messages_view),
+                name='site_messages'),
         )
 
         return urlpatterns
@@ -109,4 +112,13 @@ class TeslaSite(object):
             model_dict['config'] = self.registry_config[app_label][model_name]
         return to_return
 
+    def site_actions_view(self, request):
+        return Response(self.site_actions(request))
 
+    def user_messages_view(self, request):
+        return Response(
+            {'messages': [
+                {'level': message.level,
+                 'message': message.message,
+                 'extra_tags': message.extra_tags} \
+                for message in get_messages(request)]})
