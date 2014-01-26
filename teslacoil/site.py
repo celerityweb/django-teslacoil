@@ -15,6 +15,8 @@ from django.utils.text import capfirst
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
+from rest_framework.routers import DefaultRouter
+from teslacoil.model import TeslaModelAdminViewSet
 
 from . import __version__ as teslacoil_version
 
@@ -93,6 +95,24 @@ class TeslaSite(object):
                 api_view(['GET', 'POST', 'DELETE'])(self.session_view),
                 name='site_session'),
         )
+
+        # add url patterns for Django models
+        router = DefaultRouter()
+
+        for model, model_admin in six.iteritems(self.admin_site._registry):
+            # instantiate a dynamic ViewSet for `model_admin`
+            ModelAdminViewSet = type('ModelAdminViewSet', (TeslaModelAdminViewSet,), {
+                'model': model,
+                'model_admin': model_admin,
+            })
+
+            # create routes for the dynamic ViewSet
+            router.register(r'^{app_name}/{model_name}'.format(
+                    app_name=model._meta.app_label,
+                    model_name=model._meta.module_name),
+                ModelAdminViewSet)
+
+        urlpatterns += router.urls
 
         return urlpatterns
 
