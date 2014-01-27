@@ -15,16 +15,27 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
     Extends django-rest-framework's ViewSet and wraps Django's ModelAdmin.
     """
 
-    def list(self, request):
-        # generate a dynamic serializer for the model
-        ModelAdminSerializer = serializers.ModelSerializer
-        ModelAdminSerializer.Meta = type('Meta', (object,), {
-            'model': self.model,
+    def __init__(self, *args, **kwargs):
+        super(TeslaModelAdminViewSet, self).__init__(*args, **kwargs)
+
+        # generate a dynamic serializer class for the model
+        self.ModelDataSerializer = type('ModelDataSerializer', (serializers.ModelSerializer,), {
+            'Meta': type('Meta', (object,), {
+                'model': self.model,
+            })
         })
 
-        # return serialized data
+        self.ModelSchemaSerializer = None
+
+        class TeslaModelSerializer(serializers.Serializer):
+            schema = self.ModelSchemaSerializer
+            objects = self.ModelDataSerializer
+
+        self.ModelSerializer = TeslaModelSerializer
+
+    def list(self, request):
         queryset = self.model_admin.get_queryset(request)
-        serializer = ModelAdminSerializer(queryset, many=True) # TODO: many=?
+        serializer = self.ModelDataSerializer(queryset, many=True)
         return Response(serializer.data)
 
     def create(self, request):
