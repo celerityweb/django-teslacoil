@@ -26,12 +26,12 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
             })
         })
 
-    @classmethod
-    def as_view(cls, actions=None, **initkwargs):
-        # Use TeslaRenderer for all views in ViewSet
-        initkwargs['renderer_classes'] = [TeslaRenderer]
-        return super(TeslaModelAdminViewSet, cls).as_view(
-            actions, **initkwargs)
+    #@classmethod
+    #def as_view(cls, actions=None, **initkwargs):
+    #    # Use TeslaRenderer for all views in ViewSet
+    #    initkwargs['renderer_classes'] = [TeslaRenderer]
+    #    return super(TeslaModelAdminViewSet, cls).as_view(
+    #        actions, **initkwargs)
 
     def list(self, request):
         queryset = self.model_admin.get_queryset(request)
@@ -42,7 +42,13 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
         return super(TeslaModelAdminViewSet, self).create(request)
 
     def retrieve(self, request, pk=None):
-        return super(TeslaModelAdminViewSet, self).retrieve(request, pk)
+        #obj = self.model_admin.get_object(request, pk)
+        #change_form = self.model_admin.get_form(request, obj)
+        response = self.model_admin.change_view(request, pk)
+        ctx = response.context_data
+        change_form = ctx['adminform']
+
+        return Response(change_form.form.initial)
 
     def update(self, request, pk=None):
         return super(TeslaModelAdminViewSet, self).update(request, pk)
