@@ -5,10 +5,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from django.contrib.admin.helpers import AdminField, AdminReadonlyField
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from django.template.response import TemplateResponse
-from rest_framework import serializers, viewsets
+from rest_framework import viewsets
 from rest_framework.response import Response
 from teslacoil.renderers import TeslaRenderer
 
@@ -35,12 +36,6 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
 
     def __init__(self, *args, **kwargs):
         super(TeslaModelAdminViewSet, self).__init__(*args, **kwargs)
-
-        # generate a dynamic serializer class for the model
-        self.ModelDataSerializer = type(
-            'ModelDataSerializer',
-            (serializers.ModelSerializer,),
-            {'Meta': type('Meta', (object,), {'model': self.model})})
 
         # generate a dynamic wrapper around the ModelAdmin instance
         self.tesla_admin = type(
@@ -101,14 +96,28 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
         raise ValueError('Unknown response type from add_view: %s' % response)
 
     def retrieve(self, request, pk=None):
-        # TODO: Implement me
-        raise NotImplementedError()
-
-    def update(self, request, pk=None):
-        # TODO: marshall JSON data from request into proper params for forms
-        # TODO: this method expects a method of POST
         if not pk:
             raise Http404()
+        tmpl_response = self.model_admin.change_view(request, pk)
+        ctx = tmpl_response.context
+        obj = ctx['original']
+        adminform = ctx['adminform']
+        to_return = {}
+        for fieldset in adminform:
+            for line in fieldset:
+                for field in line:
+                    if isinstance(field, AdminField):
+                        to_return[field.field.name, field.field.value]
+                    elif isinstance(field, AdminReadonlyField):
+                        to_return[field.field.name, getattr(obj,
+                                                            field.field.name)]
+        return to_return
+
+    def update(self, request, pk=None):
+        if not pk:
+            raise Http404()
+        # TODO: marshall JSON data from request into proper params for forms
+        request.method = 'POST'
         response = self.model_admin.change_view(request, pk)
         # If the update succeeded, we would have the output from
         # model_admin.response_post_save_update and if there were validation
@@ -127,7 +136,7 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
                             data=ctx['errors'].as_json())
 
     def destroy(self, request, pk=None):
-        # TODO: This view expects a method of POST
+        request.method = 'POST'
         response = self.model_admin.delete_view(request, pk)
         if isinstance(response, HttpResponse):
             # The delete was successful
