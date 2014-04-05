@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from django.core.urlresolvers import reverse
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.template.response import TemplateResponse
 from rest_framework import serializers, viewsets
 from rest_framework.response import Response
@@ -106,6 +106,7 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         # TODO: marshall JSON data from request into proper params for forms
+        # TODO: this method expects a method of POST
         if not pk:
             raise Http404()
         response = self.model_admin.change_view(request, pk)
@@ -126,4 +127,9 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
                             data=ctx['errors'].as_json())
 
     def destroy(self, request, pk=None):
-        return super(TeslaModelAdminViewSet, self).destroy(request, pk)
+        # TODO: This view expects a method of POST
+        response = self.model_admin.delete_view(request, pk)
+        if isinstance(response, HttpResponse):
+            # The delete was successful
+            return Response(status=204)
+    
