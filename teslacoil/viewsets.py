@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 from rest_framework import serializers, viewsets
 from rest_framework.response import Response
+from teslacoil.renderers import TeslaRenderer
 
 class TeslaModelAdminViewSet(viewsets.ViewSet):
     """
@@ -15,16 +16,26 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
     Extends django-rest-framework's ViewSet and wraps Django's ModelAdmin.
     """
 
-    def list(self, request):
-        # generate a dynamic serializer for the model
-        ModelAdminSerializer = serializers.ModelSerializer
-        ModelAdminSerializer.Meta = type('Meta', (object,), {
-            'model': self.model,
+    def __init__(self, *args, **kwargs):
+        super(TeslaModelAdminViewSet, self).__init__(*args, **kwargs)
+
+        # generate a dynamic serializer class for the model
+        self.ModelDataSerializer = type('ModelDataSerializer', (serializers.ModelSerializer,), {
+            'Meta': type('Meta', (object,), {
+                'model': self.model,
+            })
         })
 
-        # return serialized data
+    @classmethod
+    def as_view(cls, actions=None, **initkwargs):
+        # Use TeslaRenderer for all views in ViewSet
+        initkwargs['renderer_classes'] = [TeslaRenderer]
+        return super(TeslaModelAdminViewSet, cls).as_view(
+            actions, **initkwargs)
+
+    def list(self, request):
         queryset = self.model_admin.get_queryset(request)
-        serializer = ModelAdminSerializer(queryset, many=True) # TODO: many=?
+        serializer = self.ModelDataSerializer(queryset, many=True)
         return Response(serializer.data)
 
     def create(self, request):
