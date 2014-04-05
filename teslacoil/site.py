@@ -16,7 +16,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 from rest_framework.routers import DefaultRouter
-from teslacoil.model import TeslaModelAdminViewSet
+from teslacoil.viewsets import TeslaModelAdminViewSet
 
 from . import __version__ as teslacoil_version
 

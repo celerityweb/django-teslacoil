@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 from rest_framework import serializers, viewsets
 from rest_framework.response import Response
+from teslacoil.renderers import TeslaRenderer
 
 class TeslaModelAdminViewSet(viewsets.ViewSet):
     """
@@ -25,13 +26,12 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
             })
         })
 
-        self.ModelSchemaSerializer = None
-
-        class TeslaModelSerializer(serializers.Serializer):
-            schema = self.ModelSchemaSerializer
-            objects = self.ModelDataSerializer
-
-        self.ModelSerializer = TeslaModelSerializer
+    @classmethod
+    def as_view(cls, actions=None, **initkwargs):
+        # Use TeslaRenderer for all views in ViewSet
+        initkwargs['renderer_classes'] = [TeslaRenderer]
+        return super(TeslaModelAdminViewSet, cls).as_view(
+            actions, **initkwargs)
 
     def list(self, request):
         queryset = self.model_admin.get_queryset(request)
