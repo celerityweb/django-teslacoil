@@ -1,3 +1,5 @@
+# TODO: do we still need this?
+
 from django.contrib.admin import ModelAdmin
 from django.db.models.base import ModelBase
 from rest_framework.utils import encoders
