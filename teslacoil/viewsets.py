@@ -6,6 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.template.response import TemplateResponse
 from rest_framework import serializers, viewsets
 from rest_framework.response import Response
@@ -13,6 +14,9 @@ from teslacoil.renderers import TeslaRenderer
 
 class TeslaModelAdminMixin(object):
     def response_post_save_add(self, request, obj):
+        return obj
+
+    def response_post_save_change(self, request, obj):
         return obj
 
 
@@ -59,9 +63,10 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def create(self, request):
+        # TODO: marshall JSON data from request into proper params for forms
         response = self.model_admin.add_view(request)
 
-        # Default context for add_view
+        # Default context for render_change_form
         # context = dict(self.admin_site.each_context(),
         #     title=(_('Add %s') if add else _('Change %s')) % force_text(opts.verbose_name),
         #     adminform=adminForm,
@@ -94,15 +99,31 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
             ctx = response.context
             return Response(status=400,
                             data=ctx['errors'].as_json())
+        raise ValueError('Unknown response type from add_view: %s' % response)
 
     def retrieve(self, request, pk=None):
         return super(TeslaModelAdminViewSet, self).retrieve(request, pk)
 
     def update(self, request, pk=None):
-        return super(TeslaModelAdminViewSet, self).update(request, pk)
-
-    def partial_update(self, request, pk=None):
-        return super(TeslaModelAdminViewSet, self).partial_update(request, pk)
+        # TODO: marshall JSON data from request into proper params for forms
+        if not pk:
+            raise Http404()
+        response = self.model_admin.change_view(request, pk)
+        # If the update succeeded, we would have the output from
+        # model_admin.response_post_save_update and if there were validation
+        # errors, it would be the output from model_admin.render_change_form
+        #
+        # In our TeslaModelAdminMixin, we expect the new object to have been
+        # returned from the response_post_save_update call.
+        if isinstance(response, self.model):
+            url_name = '%s:%s-detail' % (self.site.name,
+                                         self.model._meta.object_name.lower())
+            return Response(status=205)
+        elif isinstance(response, TemplateResponse):
+            # There must have been validation errors.
+            ctx = response.context
+            return Response(status=400,
+                            data=ctx['errors'].as_json())
 
     def destroy(self, request, pk=None):
         return super(TeslaModelAdminViewSet, self).destroy(request, pk)
