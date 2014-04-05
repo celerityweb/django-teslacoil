@@ -58,9 +58,8 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
             actions, **initkwargs)
 
     def list(self, request):
-        queryset = self.model_admin.get_queryset(request)
-        serializer = self.ModelDataSerializer(queryset, many=True)
-        return Response(serializer.data)
+        # TODO: Implement me.
+        raise NotImplementedError()
 
     def create(self, request):
         # TODO: marshall JSON data from request into proper params for forms
@@ -102,7 +101,8 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
         raise ValueError('Unknown response type from add_view: %s' % response)
 
     def retrieve(self, request, pk=None):
-        return super(TeslaModelAdminViewSet, self).retrieve(request, pk)
+        # TODO: Implement me
+        raise NotImplementedError()
 
     def update(self, request, pk=None):
         # TODO: marshall JSON data from request into proper params for forms
@@ -132,4 +132,4 @@ class TeslaModelAdminViewSet(viewsets.ViewSet):
         if isinstance(response, HttpResponse):
             # The delete was successful
             return Response(status=204)
-    
+
